@@ -7,6 +7,7 @@
     <script src="https://cdn.tailwindcss.com"></script>
     <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" rel="stylesheet">
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+    
     <script>
         tailwind.config = {
             darkMode: 'class',
@@ -23,6 +24,7 @@
             }
         }
     </script>
+
     <style>
         body { font-family: 'Inter', sans-serif; transition: background-color 0.3s, color 0.3s; }
         .glass-panel { background: rgba(255, 255, 255, 0.05); backdrop-filter: blur(10px); border: 1px solid rgba(255, 255, 255, 0.1); }
@@ -37,7 +39,6 @@
         
         .console-text { font-family: 'Courier New', Courier, monospace; }
         
-        /* Custom scrollbar for console */
         .console-container::-webkit-scrollbar { width: 6px; }
         .console-container::-webkit-scrollbar-track { background: transparent; }
         .console-container::-webkit-scrollbar-thumb { background: #4b5563; border-radius: 4px; }
@@ -45,7 +46,6 @@
 </head>
 <body class="bg-gray-50 text-gray-800 dark:bg-darkBg dark:text-gray-100 min-h-screen flex flex-col">
 
-    <!-- Navigation -->
     <nav class="sticky top-0 z-50 glass-panel shadow-md border-b dark:border-gray-800">
         <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
             <div class="flex items-center justify-between h-16">
@@ -55,11 +55,9 @@
                 </div>
                 
                 <div class="flex items-center gap-4">
-                    <!-- Language Toggle -->
                     <button id="langToggle" class="px-3 py-1 rounded-full border border-gray-300 dark:border-gray-600 hover:bg-gray-200 dark:hover:bg-gray-700 transition text-sm font-medium">
                         VI / EN
                     </button>
-                    <!-- Theme Toggle -->
                     <button id="themeToggle" class="p-2 rounded-full hover:bg-gray-200 dark:hover:bg-gray-700 transition">
                         <i class="fas fa-moon dark:hidden text-gray-600"></i>
                         <i class="fas fa-sun hidden dark:block text-yellow-400"></i>
@@ -69,10 +67,8 @@
         </div>
     </nav>
 
-    <!-- Main Content -->
     <main class="flex-grow max-w-7xl w-full mx-auto px-4 sm:px-6 lg:px-8 py-8">
         
-        <!-- Tabs -->
         <div class="flex flex-wrap border-b border-gray-300 dark:border-gray-700 mb-6">
             <button onclick="switchTab('dubbing')" id="tab-dubbing" class="w-1/2 sm:w-auto px-6 py-3 text-center font-medium text-primary border-b-2 border-primary transition bg-indigo-50 dark:bg-indigo-900/20">
                 <i class="fas fa-microphone-alt mr-2"></i><span data-i18n="tabDubbing">Lồng Tiếng Phim</span>
@@ -84,9 +80,7 @@
 
         <div class="grid grid-cols-1 lg:grid-cols-3 gap-6">
             
-            <!-- Left Column: Input & Controls -->
             <div class="lg:col-span-1 space-y-6">
-                <!-- Upload Area -->
                 <div class="glass-panel rounded-2xl p-6 shadow-sm border border-gray-200 dark:border-gray-700 text-center">
                     <h3 class="text-lg font-semibold mb-4" data-i18n="uploadTitle">Tải Video Lên</h3>
                     <label class="cursor-pointer flex flex-col items-center justify-center w-full h-40 border-2 border-dashed border-gray-400 dark:border-gray-600 rounded-xl hover:border-primary dark:hover:border-primary transition group">
@@ -97,11 +91,10 @@
                     <p id="fileNameDisplay" class="mt-3 text-sm font-medium text-green-600 dark:text-green-400 hidden"></p>
                 </div>
 
-                <!-- Settings & Action -->
                 <div class="glass-panel rounded-2xl p-6 shadow-sm border border-gray-200 dark:border-gray-700">
                     <h3 class="text-lg font-semibold mb-4" data-i18n="settingsTitle">Cài Đặt Xử Lý</h3>
                     
-                    <!-- Dubbing Settings -->
+                    <!-- Form Cài đặt Lồng tiếng -->
                     <div id="dubbing-settings" class="space-y-4">
                         <div class="flex items-center justify-between">
                             <span class="text-sm" data-i18n="targetVoice">Giọng lồng tiếng:</span>
@@ -120,7 +113,7 @@
                         </button>
                     </div>
 
-                    <!-- Review Settings -->
+                    <!-- Form Cài đặt Review -->
                     <div id="review-settings" class="space-y-4 hidden">
                         <div class="flex items-center justify-between">
                             <span class="text-sm" data-i18n="reviewStyle">Phong cách Review:</span>
@@ -141,25 +134,21 @@
                 </div>
             </div>
 
-            <!-- Right Column -->
             <div class="lg:col-span-2 space-y-6">
-                <!-- Progress Card -->
+                <!-- Thanh tiến trình -->
                 <div class="glass-panel rounded-2xl p-6 shadow-sm border border-gray-200 dark:border-gray-700">
                     <div class="flex justify-between items-center mb-4">
                         <h3 class="text-lg font-semibold" data-i18n="processStatus">Trạng Thái Xử Lý</h3>
                         <span id="overall-percentage" class="text-xl font-bold text-primary">0%</span>
                     </div>
                     
-                    <!-- Progress Bar -->
                     <div class="w-full bg-gray-200 dark:bg-gray-700 rounded-full h-4 mb-4 overflow-hidden relative border border-gray-300 dark:border-gray-600 shadow-inner">
                         <div id="progress-bar-fill" class="bg-gradient-to-r from-blue-500 to-primary h-4 rounded-full progress-bar-striped transition-all duration-300 ease-out" style="width: 0%"></div>
                     </div>
 
-                    <!-- Current Stage Indicator -->
                     <p id="current-stage-text" class="text-sm text-gray-600 dark:text-gray-300 italic min-h-[1.5rem]" data-i18n="waitingVideo">Đang chờ video...</p>
                 </div>
 
-                <!-- AI Console Log -->
                 <div class="glass-panel rounded-2xl p-0 shadow-sm border border-gray-200 dark:border-gray-700 overflow-hidden flex flex-col h-[400px]">
                     <div class="bg-gray-200 dark:bg-gray-800 px-4 py-2 border-b border-gray-300 dark:border-gray-700 flex justify-between items-center">
                         <span class="text-xs font-bold uppercase tracking-wider text-gray-500 dark:text-gray-400">Terminal (Render Cloud Backend)</span>
@@ -174,11 +163,18 @@
                     </div>
                 </div>
 
-                <!-- Result/Download Area (Hidden initially) -->
                 <div id="result-area" class="hidden glass-panel rounded-2xl p-6 text-center border border-green-500 bg-green-50 dark:bg-green-900/20">
                     <i class="fas fa-check-circle text-5xl text-green-500 mb-3"></i>
                     <h3 class="text-xl font-bold text-green-700 dark:text-green-400 mb-2" data-i18n="processComplete">Hoàn Tất Xử Lý!</h3>
                     <p class="text-sm text-gray-600 dark:text-gray-300 mb-4" data-i18n="checkSuccess">Video không có lỗi, âm thanh và đồng bộ hoàn hảo.</p>
+                    
+                    <!-- Thêm trình phát Video -->
+                    <div class="mt-4 mb-6 rounded-lg overflow-hidden shadow-lg border border-gray-200 dark:border-gray-700 max-w-md mx-auto">
+                        <video id="result-video" controls class="w-full h-auto bg-black">
+                            Trình duyệt của bạn không hỗ trợ thẻ video.
+                        </video>
+                    </div>
+
                     <a id="downloadLink" href="#" download class="inline-block bg-green-500 hover:bg-green-600 text-white font-bold py-2 px-6 rounded-lg shadow transition transform hover:-translate-y-1">
                         <i class="fas fa-download mr-2"></i><span data-i18n="downloadVid">Tải Video Xuống</span>
                     </a>
@@ -193,9 +189,10 @@
         let selectedFile = null;
         let isProcessing = false;
 
-        // Tự động nhận diện URL của Server (dù chạy localhost hay tên miền Render)
+        // Tự động nhận diện URL của Server (chạy rất mượt trên Render vì frontend và backend chung 1 domain)
         const API_URL = window.location.origin; 
         
+        // Nhận log thời gian thực từ Cloud Backend
         const evtSource = new EventSource(`${API_URL}/api/stream`);
         
         evtSource.onmessage = function(event) {
@@ -208,8 +205,14 @@
                 document.getElementById('btn-start-dubbing').disabled = false;
                 document.getElementById('btn-start-review').disabled = false;
                 if (data.downloadUrl) {
+                    // Cập nhật link tải
                     const dlBtn = document.getElementById('downloadLink');
                     dlBtn.href = data.downloadUrl;
+                    
+                    // Cập nhật và load Video vào trình phát
+                    const videoPlayer = document.getElementById('result-video');
+                    videoPlayer.src = data.downloadUrl;
+                    videoPlayer.load();
                 }
                 document.getElementById('result-area').classList.remove('hidden');
             }
