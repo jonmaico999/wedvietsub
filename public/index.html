@@ -1,0 +1,321 @@
+<!DOCTYPE html>
+<html lang="vi" class="dark">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>AI CineStudio - Lồng Tiếng & Review Phim (Cloud Render)</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+    <script>
+        tailwind.config = {
+            darkMode: 'class',
+            theme: {
+                extend: {
+                    fontFamily: { sans: ['Inter', 'sans-serif'] },
+                    colors: {
+                        primary: '#6366f1',
+                        secondary: '#ec4899',
+                        darkBg: '#0f172a',
+                        darkCard: '#1e293b'
+                    }
+                }
+            }
+        }
+    </script>
+    <style>
+        body { font-family: 'Inter', sans-serif; transition: background-color 0.3s, color 0.3s; }
+        .glass-panel { background: rgba(255, 255, 255, 0.05); backdrop-filter: blur(10px); border: 1px solid rgba(255, 255, 255, 0.1); }
+        .dark .glass-panel { background: rgba(30, 41, 59, 0.7); border: 1px solid rgba(255, 255, 255, 0.05); }
+        
+        .progress-bar-striped {
+            background-image: linear-gradient(45deg, rgba(255,255,255,.15) 25%, transparent 25%, transparent 50%, rgba(255,255,255,.15) 50%, rgba(255,255,255,.15) 75%, transparent 75%, transparent);
+            background-size: 1rem 1rem;
+            animation: progress-animation 1s linear infinite;
+        }
+        @keyframes progress-animation { from { background-position: 1rem 0; } to { background-position: 0 0; } }
+        
+        .console-text { font-family: 'Courier New', Courier, monospace; }
+        
+        /* Custom scrollbar for console */
+        .console-container::-webkit-scrollbar { width: 6px; }
+        .console-container::-webkit-scrollbar-track { background: transparent; }
+        .console-container::-webkit-scrollbar-thumb { background: #4b5563; border-radius: 4px; }
+    </style>
+</head>
+<body class="bg-gray-50 text-gray-800 dark:bg-darkBg dark:text-gray-100 min-h-screen flex flex-col">
+
+    <!-- Navigation -->
+    <nav class="sticky top-0 z-50 glass-panel shadow-md border-b dark:border-gray-800">
+        <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+            <div class="flex items-center justify-between h-16">
+                <div class="flex items-center gap-2">
+                    <i class="fas fa-film text-primary text-2xl"></i>
+                    <span class="font-bold text-xl tracking-tight bg-clip-text text-transparent bg-gradient-to-r from-primary to-secondary">AI CineStudio (Render Cloud)</span>
+                </div>
+                
+                <div class="flex items-center gap-4">
+                    <!-- Language Toggle -->
+                    <button id="langToggle" class="px-3 py-1 rounded-full border border-gray-300 dark:border-gray-600 hover:bg-gray-200 dark:hover:bg-gray-700 transition text-sm font-medium">
+                        VI / EN
+                    </button>
+                    <!-- Theme Toggle -->
+                    <button id="themeToggle" class="p-2 rounded-full hover:bg-gray-200 dark:hover:bg-gray-700 transition">
+                        <i class="fas fa-moon dark:hidden text-gray-600"></i>
+                        <i class="fas fa-sun hidden dark:block text-yellow-400"></i>
+                    </button>
+                </div>
+            </div>
+        </div>
+    </nav>
+
+    <!-- Main Content -->
+    <main class="flex-grow max-w-7xl w-full mx-auto px-4 sm:px-6 lg:px-8 py-8">
+        
+        <!-- Tabs -->
+        <div class="flex flex-wrap border-b border-gray-300 dark:border-gray-700 mb-6">
+            <button onclick="switchTab('dubbing')" id="tab-dubbing" class="w-1/2 sm:w-auto px-6 py-3 text-center font-medium text-primary border-b-2 border-primary transition bg-indigo-50 dark:bg-indigo-900/20">
+                <i class="fas fa-microphone-alt mr-2"></i><span data-i18n="tabDubbing">Lồng Tiếng Phim</span>
+            </button>
+            <button onclick="switchTab('review')" id="tab-review" class="w-1/2 sm:w-auto px-6 py-3 text-center font-medium text-gray-500 border-b-2 border-transparent hover:text-gray-700 dark:hover:text-gray-300 transition">
+                <i class="fas fa-comment-dots mr-2"></i><span data-i18n="tabReview">Review Phim (Vui nhộn)</span>
+            </button>
+        </div>
+
+        <div class="grid grid-cols-1 lg:grid-cols-3 gap-6">
+            
+            <!-- Left Column: Input & Controls -->
+            <div class="lg:col-span-1 space-y-6">
+                <!-- Upload Area -->
+                <div class="glass-panel rounded-2xl p-6 shadow-sm border border-gray-200 dark:border-gray-700 text-center">
+                    <h3 class="text-lg font-semibold mb-4" data-i18n="uploadTitle">Tải Video Lên</h3>
+                    <label class="cursor-pointer flex flex-col items-center justify-center w-full h-40 border-2 border-dashed border-gray-400 dark:border-gray-600 rounded-xl hover:border-primary dark:hover:border-primary transition group">
+                        <i class="fas fa-cloud-upload-alt text-4xl text-gray-400 group-hover:text-primary mb-2 transition"></i>
+                        <span class="text-sm text-gray-500 dark:text-gray-400" data-i18n="uploadDesc">Kéo thả hoặc click để chọn file video</span>
+                        <input type="file" id="videoInput" class="hidden" accept="video/*" onchange="handleFileUpload(event)">
+                    </label>
+                    <p id="fileNameDisplay" class="mt-3 text-sm font-medium text-green-600 dark:text-green-400 hidden"></p>
+                </div>
+
+                <!-- Settings & Action -->
+                <div class="glass-panel rounded-2xl p-6 shadow-sm border border-gray-200 dark:border-gray-700">
+                    <h3 class="text-lg font-semibold mb-4" data-i18n="settingsTitle">Cài Đặt Xử Lý</h3>
+                    
+                    <!-- Dubbing Settings -->
+                    <div id="dubbing-settings" class="space-y-4">
+                        <div class="flex items-center justify-between">
+                            <span class="text-sm" data-i18n="targetVoice">Giọng lồng tiếng:</span>
+                            <span class="text-xs bg-blue-100 text-blue-800 dark:bg-blue-900 dark:text-blue-200 px-2 py-1 rounded">VN - Dễ nghe, Nhanh</span>
+                        </div>
+                        <div class="flex items-center justify-between">
+                            <span class="text-sm" data-i18n="keepAudio">Giữ âm thanh gốc (SFX):</span>
+                            <i class="fas fa-check-circle text-green-500"></i>
+                        </div>
+                        <div class="flex items-center justify-between">
+                            <span class="text-sm" data-i18n="subtitles">Kèm Vietsub:</span>
+                            <i class="fas fa-check-circle text-green-500"></i>
+                        </div>
+                        <button onclick="startProcess('dubbing')" id="btn-start-dubbing" class="w-full mt-4 bg-gradient-to-r from-primary to-indigo-600 hover:from-indigo-600 hover:to-primary text-white font-bold py-3 px-4 rounded-xl shadow-lg transition transform hover:scale-[1.02] active:scale-95 disabled:opacity-50 disabled:cursor-not-allowed">
+                            <i class="fas fa-server mr-2"></i><span data-i18n="startDubbing">Bắt Đầu Lồng Tiếng (Render Cloud)</span>
+                        </button>
+                    </div>
+
+                    <!-- Review Settings -->
+                    <div id="review-settings" class="space-y-4 hidden">
+                        <div class="flex items-center justify-between">
+                            <span class="text-sm" data-i18n="reviewStyle">Phong cách Review:</span>
+                            <span class="text-xs bg-pink-100 text-pink-800 dark:bg-pink-900 dark:text-pink-200 px-2 py-1 rounded">Hài hước / Vui nhộn</span>
+                        </div>
+                        <div class="flex items-center justify-between">
+                            <span class="text-sm" data-i18n="summaryLevel">Tóm tắt:</span>
+                            <span class="text-xs bg-purple-100 text-purple-800 dark:bg-purple-900 dark:text-purple-200 px-2 py-1 rounded">Ngắn gọn, Trọng tâm</span>
+                        </div>
+                        <div class="flex items-center justify-between">
+                            <span class="text-sm" data-i18n="subtitles">Kèm Vietsub:</span>
+                            <i class="fas fa-check-circle text-green-500"></i>
+                        </div>
+                        <button onclick="startProcess('review')" id="btn-start-review" class="w-full mt-4 bg-gradient-to-r from-secondary to-pink-600 hover:from-pink-600 hover:to-secondary text-white font-bold py-3 px-4 rounded-xl shadow-lg transition transform hover:scale-[1.02] active:scale-95 disabled:opacity-50 disabled:cursor-not-allowed">
+                            <i class="fas fa-server mr-2"></i><span data-i18n="startReview">Bắt Đầu Review (Render Cloud)</span>
+                        </button>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Right Column -->
+            <div class="lg:col-span-2 space-y-6">
+                <!-- Progress Card -->
+                <div class="glass-panel rounded-2xl p-6 shadow-sm border border-gray-200 dark:border-gray-700">
+                    <div class="flex justify-between items-center mb-4">
+                        <h3 class="text-lg font-semibold" data-i18n="processStatus">Trạng Thái Xử Lý</h3>
+                        <span id="overall-percentage" class="text-xl font-bold text-primary">0%</span>
+                    </div>
+                    
+                    <!-- Progress Bar -->
+                    <div class="w-full bg-gray-200 dark:bg-gray-700 rounded-full h-4 mb-4 overflow-hidden relative border border-gray-300 dark:border-gray-600 shadow-inner">
+                        <div id="progress-bar-fill" class="bg-gradient-to-r from-blue-500 to-primary h-4 rounded-full progress-bar-striped transition-all duration-300 ease-out" style="width: 0%"></div>
+                    </div>
+
+                    <!-- Current Stage Indicator -->
+                    <p id="current-stage-text" class="text-sm text-gray-600 dark:text-gray-300 italic min-h-[1.5rem]" data-i18n="waitingVideo">Đang chờ video...</p>
+                </div>
+
+                <!-- AI Console Log -->
+                <div class="glass-panel rounded-2xl p-0 shadow-sm border border-gray-200 dark:border-gray-700 overflow-hidden flex flex-col h-[400px]">
+                    <div class="bg-gray-200 dark:bg-gray-800 px-4 py-2 border-b border-gray-300 dark:border-gray-700 flex justify-between items-center">
+                        <span class="text-xs font-bold uppercase tracking-wider text-gray-500 dark:text-gray-400">Terminal (Render Cloud Backend)</span>
+                        <div class="flex gap-1.5">
+                            <div class="w-3 h-3 rounded-full bg-red-500"></div>
+                            <div class="w-3 h-3 rounded-full bg-yellow-500"></div>
+                            <div class="w-3 h-3 rounded-full bg-green-500"></div>
+                        </div>
+                    </div>
+                    <div id="console-output" class="console-container flex-grow p-4 bg-gray-900 text-green-400 text-sm overflow-y-auto console-text space-y-2">
+                        <div class="text-gray-500">Render Cloud connected. Ready for task...</div>
+                    </div>
+                </div>
+
+                <!-- Result/Download Area (Hidden initially) -->
+                <div id="result-area" class="hidden glass-panel rounded-2xl p-6 text-center border border-green-500 bg-green-50 dark:bg-green-900/20">
+                    <i class="fas fa-check-circle text-5xl text-green-500 mb-3"></i>
+                    <h3 class="text-xl font-bold text-green-700 dark:text-green-400 mb-2" data-i18n="processComplete">Hoàn Tất Xử Lý!</h3>
+                    <p class="text-sm text-gray-600 dark:text-gray-300 mb-4" data-i18n="checkSuccess">Video không có lỗi, âm thanh và đồng bộ hoàn hảo.</p>
+                    <a id="downloadLink" href="#" download class="inline-block bg-green-500 hover:bg-green-600 text-white font-bold py-2 px-6 rounded-lg shadow transition transform hover:-translate-y-1">
+                        <i class="fas fa-download mr-2"></i><span data-i18n="downloadVid">Tải Video Xuống</span>
+                    </a>
+                </div>
+            </div>
+        </div>
+    </main>
+
+    <script>
+        let currentTab = 'dubbing';
+        let currentLang = 'vi';
+        let selectedFile = null;
+        let isProcessing = false;
+
+        // Tự động nhận diện URL của Server (dù chạy localhost hay tên miền Render)
+        const API_URL = window.location.origin; 
+        
+        const evtSource = new EventSource(`${API_URL}/api/stream`);
+        
+        evtSource.onmessage = function(event) {
+            const data = JSON.parse(event.data);
+            logToConsole(data.message, data.type);
+            updateProgress(data.percent, data.stageText);
+            
+            if (data.percent === 100) {
+                isProcessing = false;
+                document.getElementById('btn-start-dubbing').disabled = false;
+                document.getElementById('btn-start-review').disabled = false;
+                if (data.downloadUrl) {
+                    const dlBtn = document.getElementById('downloadLink');
+                    dlBtn.href = data.downloadUrl;
+                }
+                document.getElementById('result-area').classList.remove('hidden');
+            }
+        };
+
+        const dict = {
+            'vi': {
+                'tabDubbing': 'Lồng Tiếng Phim', 'tabReview': 'Review Phim (Vui nhộn)', 'uploadTitle': 'Tải Video Lên', 'uploadDesc': 'Kéo thả hoặc click để chọn file video', 'settingsTitle': 'Cài Đặt Xử Lý', 'targetVoice': 'Giọng lồng tiếng:', 'keepAudio': 'Giữ âm thanh gốc (SFX):', 'subtitles': 'Kèm Vietsub:', 'startDubbing': 'Bắt Đầu Lồng Tiếng (Render Cloud)', 'startReview': 'Bắt Đầu Review (Render Cloud)', 'processStatus': 'Trạng Thái Xử Lý', 'waitingVideo': 'Đang chờ video...', 'processComplete': 'Hoàn Tất Xử Lý!', 'checkSuccess': 'Video không có lỗi, âm thanh và đồng bộ hoàn hảo.', 'downloadVid': 'Tải Video Xuống', 'reviewStyle': 'Phong cách Review:', 'summaryLevel': 'Tóm tắt:', 'errNoVideo': 'Vui lòng tải video lên trước!'
+            },
+            'en': {
+                'tabDubbing': 'AI Dubbing', 'tabReview': 'AI Movie Review', 'uploadTitle': 'Upload Video', 'uploadDesc': 'Drag & drop or click to select video file', 'settingsTitle': 'Processing Settings', 'targetVoice': 'Target Voice:', 'keepAudio': 'Keep Original SFX:', 'subtitles': 'Include Subtitles:', 'startDubbing': 'Start Dubbing (Render Cloud)', 'startReview': 'Start Review (Render Cloud)', 'processStatus': 'Processing Status', 'waitingVideo': 'Waiting for video...', 'processComplete': 'Processing Complete!', 'checkSuccess': 'Zero errors detected. Audio and sync are perfect.', 'downloadVid': 'Download Video', 'reviewStyle': 'Review Style:', 'summaryLevel': 'Summary:', 'errNoVideo': 'Please upload a video first!'
+            }
+        };
+
+        document.getElementById('themeToggle').addEventListener('click', () => { document.documentElement.classList.toggle('dark'); });
+        document.getElementById('langToggle').addEventListener('click', () => { currentLang = currentLang === 'vi' ? 'en' : 'vi'; updateLanguage(); });
+
+        function updateLanguage() {
+            document.querySelectorAll('[data-i18n]').forEach(el => {
+                const key = el.getAttribute('data-i18n');
+                if (dict[currentLang][key]) {
+                    el.innerText = dict[currentLang][key];
+                }
+            });
+        }
+
+        function switchTab(tab) {
+            if (isProcessing) return;
+            currentTab = tab;
+            const tabDubbing = document.getElementById('tab-dubbing'), tabReview = document.getElementById('tab-review');
+            const activeClass = ['text-primary', 'border-b-2', 'border-primary', 'bg-indigo-50', 'dark:bg-indigo-900/20'];
+            const inactiveClass = ['text-gray-500', 'border-b-2', 'border-transparent', 'hover:text-gray-700', 'dark:hover:text-gray-300'];
+
+            if (tab === 'dubbing') {
+                tabDubbing.classList.remove(...inactiveClass); tabDubbing.classList.add(...activeClass);
+                tabReview.classList.remove(...activeClass); tabReview.classList.add(...inactiveClass);
+                document.getElementById('dubbing-settings').classList.remove('hidden'); document.getElementById('review-settings').classList.add('hidden');
+            } else {
+                tabReview.classList.remove(...inactiveClass); tabReview.classList.add(...activeClass);
+                tabDubbing.classList.remove(...activeClass); tabDubbing.classList.add(...inactiveClass);
+                document.getElementById('review-settings').classList.remove('hidden'); document.getElementById('dubbing-settings').classList.add('hidden');
+            }
+        }
+
+        function handleFileUpload(event) {
+            selectedFile = event.target.files[0];
+            if (selectedFile) {
+                const display = document.getElementById('fileNameDisplay');
+                display.innerText = `File: ${selectedFile.name} (${(selectedFile.size / (1024*1024)).toFixed(2)} MB)`;
+                display.classList.remove('hidden');
+                logToConsole(`Đã nạp file: ${selectedFile.name}. Sẵn sàng gửi lên Render Cloud Server.`, 'info');
+                document.getElementById('current-stage-text').innerText = 'Video đã sẵn sàng.';
+            }
+        }
+
+        function logToConsole(message, type = 'info') {
+            const consoleEl = document.getElementById('console-output');
+            const time = new Date().toLocaleTimeString();
+            let color = 'text-green-400';
+            if (type === 'warn') color = 'text-yellow-400';
+            if (type === 'error') color = 'text-red-500';
+            if (type === 'system') color = 'text-blue-400';
+
+            const msgDiv = document.createElement('div');
+            msgDiv.className = color;
+            msgDiv.innerHTML = `<span class="text-gray-500">[${time}]</span> ${message}`;
+            consoleEl.appendChild(msgDiv);
+            consoleEl.scrollTop = consoleEl.scrollHeight;
+        }
+
+        function updateProgress(percent, stageText) {
+            document.getElementById('overall-percentage').innerText = `${percent}%`;
+            document.getElementById('progress-bar-fill').style.width = `${percent}%`;
+            document.getElementById('current-stage-text').innerText = stageText;
+        }
+
+        async function startProcess(type) {
+            if (!selectedFile) { alert(dict[currentLang]['errNoVideo']); return; }
+            
+            isProcessing = true;
+            document.getElementById('btn-start-dubbing').disabled = true;
+            document.getElementById('btn-start-review').disabled = true;
+            document.getElementById('result-area').classList.add('hidden');
+            document.getElementById('console-output').innerHTML = ''; 
+
+            logToConsole('Đang Upload video lên Render Cloud Server...', 'system');
+            
+            const formData = new FormData();
+            formData.append('video', selectedFile);
+
+            const endpoint = type === 'dubbing' ? '/api/process-dubbing' : '/api/process-review';
+
+            try {
+                const response = await fetch(`${API_URL}${endpoint}`, {
+                    method: 'POST',
+                    body: formData
+                });
+                const result = await response.json();
+                if(result.error) logToConsole(result.error, 'error');
+            } catch (error) {
+                logToConsole('Lỗi kết nối tới Server: ' + error.message, 'error');
+                isProcessing = false;
+                document.getElementById('btn-start-dubbing').disabled = false;
+                document.getElementById('btn-start-review').disabled = false;
+            }
+        }
+    </script>
+</body>
+</html>
