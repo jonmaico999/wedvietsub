@@ -1,6 +1,6 @@
 FROM node:18-slim
 
-Cài đặt FFmpeg trên môi trường Linux của Render Server (Đã thêm dấu # để fix lỗi)
+Cài đặt FFmpeg trên môi trường Linux của Render Server
 
 RUN apt-get update && apt-get install -y ffmpeg && rm -rf /var/lib/apt/lists/*
 
