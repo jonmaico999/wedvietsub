@@ -7,13 +7,13 @@ const path = require('path');
 
 const app = express();
 app.use(cors());
+app.use(express.json());
 
 // Phục vụ giao diện người dùng từ thư mục public
 app.use(express.static(path.join(__dirname, 'public')));
+// Mở thư mục outputs để người dùng có thể tải file về
 app.use('/outputs', express.static(path.join(__dirname, 'outputs')));
-app.use(express.json());
 
-// Khởi tạo thư mục tạm
 const uploadDir = path.join(__dirname, 'uploads');
 const outputDir = path.join(__dirname, 'outputs');
 if (!fs.existsSync(uploadDir)) fs.mkdirSync(uploadDir, { recursive: true });
@@ -27,7 +27,7 @@ const upload = multer({ storage: storage });
 
 let clients = [];
 
-// Route Server-Sent Events (SSE) gửi log realtime
+// Route Server-Sent Events (SSE) gửi log realtime về frontend
 app.get('/api/stream', (req, res) => {
     res.setHeader('Content-Type', 'text/event-stream');
     res.setHeader('Cache-Control', 'no-cache');
@@ -46,9 +46,6 @@ function sendLog(percent, stageText, message, type = 'info', downloadUrl = null)
 
 const sleep = (ms) => new Promise(resolve => setTimeout(resolve, ms));
 
-// ==========================================
-// API LỒNG TIẾNG PHIM
-// ==========================================
 app.post('/api/process-dubbing', upload.single('video'), async (req, res) => {
     if (!req.file) return res.status(400).json({ error: 'Không có video!' });
     
@@ -61,7 +58,7 @@ app.post('/api/process-dubbing', upload.single('video'), async (req, res) => {
     try {
         sendLog(10, 'Giai đoạn 1: Phân tích Video & Ngôn ngữ', 'STAGE 1: Render Cloud đang trích xuất metadata video...', 'system');
         await sleep(1500);
-        sendLog(20, 'Giai đoạn 1: Phân tích Video & Ngôn ngữ', 'Gọi AI Whisper để nhận diện ngôn ngữ gốc...');
+        sendLog(20, 'Giai đoạn 1: Phân tích Video & Ngôn ngữ', 'Gọi API AI Whisper để nhận diện ngôn ngữ gốc...');
         await sleep(2000);
         sendLog(30, 'Giai đoạn 1: Phân tích Video & Ngôn ngữ', 'Phát hiện ngôn ngữ: English (Độ chính xác: 99.8%).', 'info');
 
@@ -73,9 +70,9 @@ app.post('/api/process-dubbing', upload.single('video'), async (req, res) => {
         await sleep(2500);
         sendLog(75, 'Giai đoạn 3: Tách âm thanh & Lồng tiếng AI', 'Đang tạo giọng AI Tiếng Việt chuẩn...');
 
-        sendLog(85, 'Giai đoạn 4: Đang xuất Video (FFmpeg Render)', 'STAGE 4: FFmpeg trên Render đang ghép âm thanh & video...', 'system');
+        sendLog(85, 'Giai đoạn 4: Đang xuất Video (FFmpeg Render)', 'STAGE 4: FFmpeg trên Cloud Render đang ghép âm thanh & video...', 'system');
         
-        // Tạo file đầu ra tạm thời
+        // Mô phỏng việc Render xử lý video bằng cách copy file
         fs.copyFileSync(inputPath, outputPath);
         await sleep(3000); 
 
@@ -90,9 +87,6 @@ app.post('/api/process-dubbing', upload.single('video'), async (req, res) => {
     }
 });
 
-// ==========================================
-// API REVIEW PHIM
-// ==========================================
 app.post('/api/process-review', upload.single('video'), async (req, res) => {
     if (!req.file) return res.status(400).json({ error: 'Không có video!' });
     
@@ -106,8 +100,9 @@ app.post('/api/process-review', upload.single('video'), async (req, res) => {
         await sleep(2000);
         sendLog(50, 'Giai đoạn 2: Lên Kịch Bản Review', 'STAGE 2: AI viết kịch bản hài hước & Render giọng Reviewer...', 'info');
         await sleep(2500);
-        sendLog(80, 'Giai đoạn 3: Xuất Video Review', 'STAGE 3: FFmpeg ghép Vietsub và hiệu ứng âm thanh...', 'system');
+        sendLog(80, 'Giai đoạn 3: Xuất Video Review', 'STAGE 3: FFmpeg Cloud đang ghép Vietsub và hiệu ứng âm thanh...', 'system');
         
+        // Mô phỏng việc Render xử lý video
         fs.copyFileSync(req.file.path, outputPath);
         await sleep(3000);
         
@@ -118,7 +113,6 @@ app.post('/api/process-review', upload.single('video'), async (req, res) => {
     }
 });
 
-// Trả về trang giao diện chính nếu gọi route root
 app.get('*', (req, res) => {
     res.sendFile(path.join(__dirname, 'public', 'index.html'));
 });
